@@ -18,14 +18,14 @@ public class AuthController : ControllerBase
         _context = context;
         _config = config;
     }
-[HttpGet("all")]
-public async Task<IActionResult> GetAllUsers()
-{
-    var users = await _context.Users
-        .Select(u => new { u.Id, u.Name, u.Email }) 
-        .ToListAsync();
-    return Ok(users);
-}
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var users = await _context.Users
+            .Select(u => new { u.Id, u.Name, u.Email }) 
+            .ToListAsync();
+        return Ok(users);
+    }
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {

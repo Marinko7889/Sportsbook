@@ -1,49 +1,56 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import TeamList from "../components/TeamList";
 import TeamForm from "../components/TeamForm";
-import CompetitionSelect from "../components/CompetitionSelect";
-import Sidebar from "../components/Sidebar";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Spinner from "../components/Spinner";
 
 export default function TeamsPage() {
-  const [teams, setTeams] = useState([]);
+  const queryClient = useQueryClient();
 
   const fetchTeams = async () => {
-    try {
-      const res = await fetch("http://localhost:5072/api/teams");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setTeams(data);
-    } catch (err) {
-      console.error("Fetch error:", err);
-    }
+    const res = await fetch("http://localhost:5072/api/teams");
+    if (!res.ok) throw new Error("Failed to fetch teams");
+    return res.json();
   };
 
-  useEffect(() => {
-    fetchTeams();
-  }, []);
+  const { data: teams = [], isLoading } = useQuery({
+    queryKey: ["teams"],
+    queryFn: fetchTeams,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const addTeam = async (team) => {
-    await fetch("http://localhost:5072/api/teams", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(team),
-    });
-    fetchTeams();
-  };
+  const addTeamMutation = useMutation({
+    mutationFn: (team) =>
+      fetch("http://localhost:5072/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(team),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teams"] }),
+  });
 
-  const deleteTeam = async (id) => {
-    await fetch(`http://localhost:5072/api/teams/${id}`, { method: "DELETE" });
-    fetchTeams();
-  };
+  const deleteTeamMutation = useMutation({
+    mutationFn: (id) =>
+      fetch(`http://localhost:5072/api/teams/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teams"] }),
+  });
+
+  if (isLoading)
+    return (
+      <p>
+        <Spinner />
+      </p>
+    );
 
   return (
     <div>
-      <h1 className="text-center">Sportsbook</h1>
-      <TeamForm onAdd={addTeam} />
-      <TeamList teams={teams} onDelete={deleteTeam} />
-      {/* <CompetitionSelect /> */}
+      <h1 className="text-center text-3xl font-bold mt-4">Sportsbook</h1>
+      <TeamForm onAdd={(team) => addTeamMutation.mutate(team)} />
+      <TeamList
+        teams={teams}
+        onDelete={(id) => deleteTeamMutation.mutate(id)}
+      />
     </div>
   );
 }

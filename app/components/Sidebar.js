@@ -8,16 +8,18 @@ export default function Sidebar({ active, setActive }) {
   const { locale } = useLocale();
   const router = useRouter();
 
-  const handleClick = (tab, path) => {
-    setActive(tab);
-    router.push(path);
-  };
+  // const handleClick = (tab, path) => {
+  //   setActive(tab);
+  //   router.push(path, undefined, { shallow: true });
+  // };
 
   const handleLogout = () => {
-    logout(); // briše sve iz localStorage
+    logout();
     router.push("/login");
   };
-
+  const handleClick = (tab) => {
+    setActive(tab);
+  };
   return (
     <div className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col">
       <button
@@ -35,6 +37,14 @@ export default function Sidebar({ active, setActive }) {
         onClick={() => handleClick("teams", "/teams")}
       >
         {t("Teams", locale)}
+      </button>
+      <button
+        className={`mb-2 p-2 text-left ${
+          active === "vjezba" ? "bg-gray-700" : ""
+        }`}
+        onClick={() => handleClick("vjezba", "/vjezba")}
+      >
+        vjezba
       </button>
 
       <div className="mt-auto">

@@ -53,7 +53,7 @@ app.UseAuthorization();
 app.MapControllers();
 using (var context = new SportsbookContextFactory().CreateDbContext(null))
 {
-    Console.WriteLine(context.Database.CanConnect() ? "✅ Connected!" : "❌ Not connected!");
+    Console.WriteLine(context.Database.CanConnect() ? " Connected!" : "Not connected!");
 }
 
 app.Run();

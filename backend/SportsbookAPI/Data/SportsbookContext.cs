@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 public class SportsbookContext : DbContext
 {
     public SportsbookContext(DbContextOptions<SportsbookContext> options)
-        : base(options)   // ovo je ključno da DI može stvoriti context
+        : base(options)   
     {
     }
 

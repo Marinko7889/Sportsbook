@@ -42,6 +42,9 @@ export default function LoginPage() {
     }
   };
 
+  const register = () => {
+    router.push("/register");
+  };
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <form
@@ -78,7 +81,7 @@ export default function LoginPage() {
           {t("Login", locale)}
         </button>
         <button
-          onClick={() => router.push("/register")}
+          onClick={register}
           className="bg-white text-blue w-full p-2 rounded mt-2"
         >
           {t("Register", locale)}

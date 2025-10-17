@@ -12,21 +12,6 @@ public class CompetitionsController : ControllerBase
         _context = context;
     }
 
-    // [HttpGet]
-    // public async Task<IEnumerable<Competition>> GetCompetitions()
-    // {
-    //     return await _context.Competitions.ToListAsync();
-    // }
-    // [HttpGet]
-    // public async Task<IEnumerable<Competition>> GetCompetitions()
-    // {
-    //     return await _context.Competitions
-    //         .Include(c => c.Matches)
-    //             .ThenInclude(m => m.HomeTeam)
-    //         .Include(c => c.Matches)
-    //             .ThenInclude(m => m.AwayTeam)
-    //         .ToListAsync();
-    // }
     [HttpGet]
     public async Task<IEnumerable<CompetitionDto>> GetCompetitions()
     {

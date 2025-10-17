@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useLocale } from "../context/LocaleContext";
 import { t } from "..//lib/i18n";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export default function TeamForm({ onAdd }) {
   const [name, setName] = useState("");
   const { locale } = useLocale();
@@ -29,7 +30,7 @@ export default function TeamForm({ onAdd }) {
         type="submit"
         className="py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
       >
-        {t("Add Team", locale)}
+        {t("Add team", locale)}
       </button>
     </form>
   );

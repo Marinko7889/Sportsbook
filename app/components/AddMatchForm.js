@@ -16,13 +16,12 @@ export default function AddMatchForm({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validacija
     if (!homeTeamId || !awayTeamId || !date) {
       toast.error("Please select both teams and a date!");
       return;
     }
 
-    addMatch(e); // poziva funkciju iz MatchesList
+    addMatch(e);
   };
   return (
     <>
