@@ -44,7 +44,6 @@ public class MatchesController : ControllerBase
         if (match == null)
             return BadRequest("Match data is required.");
 
-        // Provjeri da ID-jevi postoje
         var homeExists = await _context.Teams.AnyAsync(t => t.Id == match.HomeTeamId);
         var awayExists = await _context.Teams.AnyAsync(t => t.Id == match.AwayTeamId);
         var compExists = await _context.Competitions.AnyAsync(c => c.ID == match.CompetitionId);
@@ -52,21 +51,18 @@ public class MatchesController : ControllerBase
         if (!homeExists || !awayExists || !compExists)
             return BadRequest("Invalid team or competition ID.");
 
-        // Postavi datum u UTC
         match.Date = DateTime.SpecifyKind(match.Date, DateTimeKind.Utc);
 
         // Dodaj u bazu
         _context.Matches.Add(match);
         await _context.SaveChangesAsync();
 
-            // Vrati kompletan match s navigacijama
             var insertedMatch = await _context.Matches
                 .Include(m => m.HomeTeam)
                 .Include(m => m.AwayTeam)
                 .Include(m => m.Competition)
                 .FirstOrDefaultAsync(m => m.Id == match.Id);
 
-        // return Ok(insertedMatch);
         return Ok(new {
         matchId = insertedMatch?.Id,
         homeTeam = insertedMatch?.HomeTeam?.Name,
@@ -76,7 +72,6 @@ public class MatchesController : ControllerBase
     });
     }
 
-        // DELETE: api/matches/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMatch(int id)
         {

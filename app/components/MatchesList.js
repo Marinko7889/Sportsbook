@@ -84,7 +84,7 @@ export default function MatchesList({ competition }) {
   if (teamsLoading || matchesLoading) return <Spinner />;
 
   const groupedMatches = matches.reduce((acc, match) => {
-    const dateKey = new Date(match.date).toLocaleDateString(locale);
+    const dateKey = new Date(match.date).toLocaleDateString("hr-HR");
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(match);
     return acc;

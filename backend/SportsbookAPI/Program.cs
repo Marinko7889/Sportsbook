@@ -5,7 +5,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Registracija DbContext-a
 builder.Services.AddDbContext<SportsbookContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

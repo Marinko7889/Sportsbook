@@ -19,14 +19,16 @@ export default function Sidebar({ active, setActive }) {
   };
   const handleClick = (tab) => {
     setActive(tab);
+    router.push(`/${tab}`);
   };
+
   return (
-    <div className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col">
+    <div className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col fixed">
       <button
         className={`mb-2 p-2 text-left ${
           active === "competitions" ? "bg-gray-700" : ""
         }`}
-        onClick={() => handleClick("competitions", "/competitions")}
+        onClick={() => handleClick("competition", "/competition")}
       >
         {t("Competitions", locale)}
       </button>

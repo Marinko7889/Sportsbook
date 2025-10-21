@@ -11,5 +11,6 @@ public class SportsbookContext : DbContext
     public DbSet<Competition> Competitions { get; set; }
     public DbSet<Match> Matches { get; set; }
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Igrac> Igrac { get; set; }
 
 }
