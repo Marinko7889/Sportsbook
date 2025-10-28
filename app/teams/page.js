@@ -36,12 +36,7 @@ export default function TeamsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["teams"] }),
   });
 
-  if (isLoading)
-    return (
-      <p>
-        <Spinner />
-      </p>
-    );
+  if (isLoading) return <Spinner />;
 
   return (
     <div>

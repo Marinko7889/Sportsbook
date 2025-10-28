@@ -12,7 +12,7 @@ export default function HomePage() {
     <div className="flex min-h-screen">
       {/* <Sidebar active={active} setActive={setActive} /> */}
 
-      <div className="flex-1 p-8">
+      <div className=" p-8">
         {/* {active === "competitions" && <CompetitionsPage />}
         {active === "teams" && <TeamsPage />} */}
       </div>

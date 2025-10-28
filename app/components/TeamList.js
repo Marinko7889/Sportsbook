@@ -1,6 +1,11 @@
+"use client";
 import { useLocale } from "../context/LocaleContext";
 import { t } from "..//lib//i18n";
+import { useRouter } from "next/navigation";
+
 export default function TeamList({ teams, onDelete }) {
+  const router = useRouter();
+
   const { locale } = useLocale();
   return (
     <div className="max-w-md mx-auto mt-6 p-4 bg-white rounded-xl shadow-md">
@@ -17,6 +22,7 @@ export default function TeamList({ teams, onDelete }) {
             <li
               key={team.id}
               className="flex justify-between items-center p-2 border rounded hover:bg-gray-50"
+              onClick={() => router.push(`/teams/${team.id}`)}
             >
               <span>{team.name}</span>
               <button

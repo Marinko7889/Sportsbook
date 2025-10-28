@@ -48,6 +48,8 @@ export default function PageWrapper({ children }) {
   }
 
   if (!isAuthenticated) {
+    router.push(`/login`);
+
     return null;
   }
 
@@ -56,11 +58,11 @@ export default function PageWrapper({ children }) {
     router.push(`/${value}`);
   };
 
-  let content;
-  if (active === "teams") content = <TeamsPage />;
-  else if (active === "vjezba") content = <VjezbaPage />;
-  else if (active === "competitions") content = <CompetitionsPage />;
-  else content = <Error />;
+  // let content;
+  // if (active === "teams") content = <TeamsPage />;
+  // else if (active === "vjezba") content = <VjezbaPage />;
+  // else if (active === "competitions") content = <CompetitionsPage />;
+  // else content = <Error />;
 
   return (
     <QueryClientProvider client={queryClient}>
