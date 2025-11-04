@@ -1,85 +1,84 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+// using Microsoft.AspNetCore.Mvc;
+// using Microsoft.EntityFrameworkCore;
+// using Microsoft.AspNetCore.Authorization;
 
-[ApiController]
-[Route("api/[controller]")]
-public class MatchesController : ControllerBase
-{
-    private readonly SportsbookContext _context;
+// [ApiController]
+// [Route("api/[controller]")]
+// [Authorize]
 
-    public MatchesController(SportsbookContext context)
-    {
-        _context = context;
-    }
+// public class MatchesController : ControllerBase
+// {
+//     private readonly SportsbookContext _context;
 
-    // [HttpGet]
-    // public async Task<IEnumerable<Match>> GetMatches()
-    // {
-    //     return await _context.Matches.ToListAsync();
-    // }
-    [HttpGet]
-    public async Task<IActionResult> GetMatchesWithNames()
-    {
-        var matches = await _context.Matches
-            .Include(m => m.HomeTeam)
-            .Include(m => m.AwayTeam)
-            .Include(m => m.Competition)
-            .Select(m => new
-            {
-                MatchId = m.Id,
-                HomeTeam = m.HomeTeam.Name,
-                AwayTeam = m.AwayTeam.Name,
-                Competition = m.Competition.Name,
-                Date = m.Date
-            })
-            .ToListAsync();
+//     public MatchesController(SportsbookContext context)
+//     {
+//         _context = context;
+//     }
 
-        return Ok(matches);
-    }
+    
+//     [HttpGet]
+//     public async Task<IActionResult> GetMatchesWithNames()
+//     {
+//         var matches = await _context.Matches
+//             .Include(m => m.HomeTeam)
+//             .Include(m => m.AwayTeam)
+//             .Include(m => m.Competition)
+//             .Select(m => new
+//             {
+//                 MatchId = m.Id,
+//                 HomeTeam = m.HomeTeam.Name,
+//                 AwayTeam = m.AwayTeam.Name,
+//                 Competition = m.Competition.Name,
+//                 Date = m.Date
+//             })
+//             .ToListAsync();
+
+//         return Ok(matches);
+//     }
 
 
-    [HttpPost]
-    public async Task<IActionResult> AddMatch([FromBody] Match match)
-    {
-        if (match == null)
-            return BadRequest("Match data is required.");
+//     [HttpPost]
+//     public async Task<IActionResult> AddMatch([FromBody] Match match)
+//     {
+//         if (match == null)
+//             return BadRequest("Match data is required.");
 
-        var homeExists = await _context.Teams.AnyAsync(t => t.Id == match.HomeTeamId);
-        var awayExists = await _context.Teams.AnyAsync(t => t.Id == match.AwayTeamId);
-        var compExists = await _context.Competitions.AnyAsync(c => c.ID == match.CompetitionId);
+//         var homeExists = await _context.Teams.AnyAsync(t => t.Id == match.HomeTeamId);
+//         var awayExists = await _context.Teams.AnyAsync(t => t.Id == match.AwayTeamId);
+//         var compExists = await _context.Competitions.AnyAsync(c => c.ID == match.CompetitionId);
 
-        if (!homeExists || !awayExists || !compExists)
-            return BadRequest("Invalid team or competition ID.");
+//         if (!homeExists || !awayExists || !compExists)
+//             return BadRequest("Invalid team or competition ID.");
 
-        match.Date = DateTime.SpecifyKind(match.Date, DateTimeKind.Utc);
+//         match.Date = DateTime.SpecifyKind(match.Date, DateTimeKind.Utc);
 
-        // Dodaj u bazu
-        _context.Matches.Add(match);
-        await _context.SaveChangesAsync();
+//         // Dodaj u bazu
+//         _context.Matches.Add(match);
+//         await _context.SaveChangesAsync();
 
-            var insertedMatch = await _context.Matches
-                .Include(m => m.HomeTeam)
-                .Include(m => m.AwayTeam)
-                .Include(m => m.Competition)
-                .FirstOrDefaultAsync(m => m.Id == match.Id);
+//             var insertedMatch = await _context.Matches
+//                 .Include(m => m.HomeTeam)
+//                 .Include(m => m.AwayTeam)
+//                 .Include(m => m.Competition)
+//                 .FirstOrDefaultAsync(m => m.Id == match.Id);
 
-        return Ok(new {
-        matchId = insertedMatch?.Id,
-        homeTeam = insertedMatch?.HomeTeam?.Name,
-        awayTeam = insertedMatch?.AwayTeam?.Name,
-        competition = insertedMatch?.Competition?.Name,
-        date = insertedMatch?.Date
-    });
-    }
+//         return Ok(new {
+//         matchId = insertedMatch?.Id,
+//         homeTeam = insertedMatch?.HomeTeam?.Name,
+//         awayTeam = insertedMatch?.AwayTeam?.Name,
+//         competition = insertedMatch?.Competition?.Name,
+//         date = insertedMatch?.Date
+//     });
+//     }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMatch(int id)
-        {
-            var match = await _context.Matches.FindAsync(id);
-            if (match == null) return NotFound();
+//         [HttpDelete("{id}")]
+//         public async Task<IActionResult> DeleteMatch(int id)
+//         {
+//             var match = await _context.Matches.FindAsync(id);
+//             if (match == null) return NotFound();
 
-            _context.Matches.Remove(match);
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
-    }
+//             _context.Matches.Remove(match);
+//             await _context.SaveChangesAsync();
+//             return Ok();
+//         }
+//     }
