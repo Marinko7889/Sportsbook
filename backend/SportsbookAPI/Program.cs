@@ -12,10 +12,8 @@ if (File.Exists(".env.local"))
     Console.WriteLine("Loaded .env.local");
 }
 //Env.Load(".env.local");
-var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") 
-                 ?? throw new Exception("DB_PASSWORD is not set");
-var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") 
-             ?? throw new Exception("JWT_KEY is not set");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +23,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<SportsbookContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddControllers();
+//builder.Services.AddControllers();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -59,6 +57,7 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+builder.Services.AddAuthorization();
 
 // CORS za frontend
 builder.Services.AddCors(options =>
@@ -125,12 +124,26 @@ app.MapDelete("/api/teams/{id}", [Authorize] async (int id, SportsbookContext db
 
 app.MapGet("/api/competitions", [Authorize] async (SportsbookContext db) =>
 {
-    var competitions = await db.Competitions
+    var competitionsFromDb = await db.Competitions
         .Include(c => c.Matches)
             .ThenInclude(m => m.HomeTeam)
         .Include(c => c.Matches)
             .ThenInclude(m => m.AwayTeam)
         .ToListAsync();
+
+    var competitions = competitionsFromDb.Select(c => new
+    {
+        c.ID,
+        c.Name,
+        RowVersion = Convert.ToBase64String(c.RowVersion ?? new byte[0]),
+        Matches = c.Matches.Select(m => new
+        {
+            m.Id,
+            HomeTeam = m.HomeTeam.Name,
+            AwayTeam = m.AwayTeam.Name
+        })
+    });
+
     return Results.Ok(competitions);
 });
 
@@ -144,30 +157,78 @@ app.MapGet("/api/competitions/{id}", [Authorize] async (int id, SportsbookContex
         .FirstOrDefaultAsync(c => c.ID == id);
 
     if (competition == null) return Results.NotFound();
-    return Results.Ok(competition);
+
+    return Results.Ok(new
+    {
+        competition.ID,
+        competition.Name,
+        RowVersion = Convert.ToBase64String(competition.RowVersion ?? new byte[0]),
+        Matches = competition.Matches.Select(m => new { m.Id })
+    });
 });
+
+   
 
 app.MapPost("/api/competitions", [Authorize] async (Competition competition, SportsbookContext db) =>
 {
-    var validation = ValidateStringLength(competition.Name, 3, "Prekratko ime natjecanja.");
-    if (validation != null) return validation;
+    if (string.IsNullOrWhiteSpace(competition.Name) || competition.Name.Length < 3)
+        return Results.BadRequest("Competition name too short");
+
+    if (competition.RowVersion == null || competition.RowVersion.Length == 0)
+    {
+        competition.RowVersion = new byte[8];
+        Random.Shared.NextBytes(competition.RowVersion);
+    }
+
     db.Competitions.Add(competition);
     await db.SaveChangesAsync();
-    return Results.Ok(competition);
+
+    return Results.Ok(new
+    {
+        competition.ID,
+        competition.Name,
+        RowVersion = Convert.ToBase64String(competition.RowVersion),
+        Matches = competition.Matches.Select(m => new { m.Id })
+    });
 });
 
-app.MapPut("/api/competitions/{id}", [Authorize] async (int id, Competition competition, SportsbookContext db) =>
+app.MapPut("/api/competitions/{id}", [Authorize] async (int id, CompetitionUpdateDto dto, SportsbookContext db) =>
 {
-    var existing = await db.Competitions.FindAsync(id);
+    var existing = await db.Competitions.FirstOrDefaultAsync(c => c.ID == id);
     if (existing == null) return Results.NotFound();
 
-    var validation = ValidateStringLength(competition.Name, 3, "Prekratko ime natjecanja.");
-    if (validation != null) return validation;
-    existing.Name = competition.Name;
-    await db.SaveChangesAsync();
-    return Results.Ok(existing);
-});
+    if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length < 3)
+        return Results.BadRequest("Competition name too short.");
 
+    if (string.IsNullOrEmpty(dto.RowVersion))
+        return Results.BadRequest("Missing rowVersion");
+
+    var clientRowVersion = Convert.FromBase64String(dto.RowVersion);
+
+    if (!existing.RowVersion.SequenceEqual(clientRowVersion))
+        return Results.Conflict("Competition was updated by another user");
+
+    existing.Name = dto.Name;
+
+    existing.RowVersion = new byte[8];
+    Random.Shared.NextBytes(existing.RowVersion);
+
+    try
+    {
+        await db.SaveChangesAsync();
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        return Results.Conflict("Competition was updated by another user");
+    }
+
+    return Results.Ok(new
+    {
+        existing.ID,
+        existing.Name,
+        RowVersion = Convert.ToBase64String(existing.RowVersion)
+    });
+});
 app.MapDelete("/api/competitions/{id}", [Authorize] async (int id, SportsbookContext db) =>
 {
     var competition = await db.Competitions.FindAsync(id);
