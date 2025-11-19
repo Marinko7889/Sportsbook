@@ -1,75 +1,73 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
-import CompetitionsPage from "../competition/page";
-import TeamsPage from "../teams/page";
-import VjezbaPage from "../vjezba/page";
-import { getToken } from "../lib/auth";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Spinner from "./Spinner";
-import Error from "./Error";
+import { Toaster } from "react-hot-toast";
 
-const queryClient = new QueryClient();
+export default function PageWrapper({ children, BASE_URL }) {
+  // const router = useRouter();
+  // const pathname = usePathname();
 
-export default function PageWrapper({ children }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const [active, setActive] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  // useEffect(() => {
+  //   const checkAuth = async () => {
+  //     try {
+  //       const res = await fetch(`${BASE_URL}/auth/me`, {
+  //         credentials: "include",
+  //       });
 
-  useEffect(() => {
-    const token = getToken();
+  //       if (!res.ok) {
+  //         setIsAuthenticated(false);
+  //         router.push("/login");
+  //       } else {
+  //         const data = await res.json();
+  //         setIsAuthenticated(true);
+  //         console.log("Ulogiran");
+  //         console.log(data);
+  //       }
+  //     } catch (err) {
+  //       console.error(err);
+  //       setIsAuthenticated(false);
+  //       router.push("/login");
+  //     } finally {
+  //       setCheckingAuth(false);
+  //     }
+  //   };
 
-    if (!token || token === "undefined" || token === "") {
-      setIsAuthenticated(false);
-      router.replace("/login");
-    } else {
-      setIsAuthenticated(true);
-    }
+  //   checkAuth();
+  // }, [router]);
 
-    setCheckingAuth(false);
-  }, [router]);
+  // // useEffect(() => {
+  // //   if (pathname === "/teams") setActive("teams");
+  // //   else if (pathname === "/vjezba") setActive("vjezba");
+  // //   else if (pathname === "/competition") setActive("competitions");
+  // //   else if (pathname === "/vjezba22") setActive("Vjezba22");
+  // // }, [pathname]);
 
-  useEffect(() => {
-    if (pathname.includes("teams")) setActive("teams");
-    else if (pathname.includes("vjezba")) setActive("vjezba");
-    else if (pathname.includes("competition")) setActive("competitions");
-    //else if (pathname.includes("hr")) setActive("competitions");
-    //else if (pathname.includes("en")) setActive("competitions");
-    else setActive("error");
-  }, [pathname]);
+  // if (checkingAuth) {
+  //   return <Spinner />;
+  // }
 
-  if (checkingAuth) {
-    return <Spinner />;
-  }
+  // if (!isAuthenticated) {
+  //   router.push(`/login`);
 
-  if (!isAuthenticated) {
-    router.push(`/login`);
+  //   return null;
+  // }
 
-    return null;
-  }
-
-  const handleActiveChange = (value) => {
-    setActive(value);
-    router.push(`/${value}`);
-  };
-
-  // let content;
-  // if (active === "teams") content = <TeamsPage />;
-  // else if (active === "vjezba") content = <VjezbaPage />;
-  // else if (active === "competitions") content = <CompetitionsPage />;
-  // else content = <Error />;
+  // const handleActiveChange = (value) => {
+  //   //setActive(value);
+  //   router.push(`/${value}`);
+  // };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen">
-        <Sidebar active={active} setActive={handleActiveChange} />
-        <main className="flex-1 p-8 ml-64">{children}</main>
-      </div>
-    </QueryClientProvider>
+    // <QueryClientProvider client={queryClient}>
+    <div className="flex min-h-screen">
+      <Sidebar BASE_URL={BASE_URL} />
+      <main className="flex-1 p-8 ml-64 overflow-x-auto;">
+        {children} <Toaster position="top-center" />
+      </main>
+    </div>
+    // </QueryClientProvider>
   );
 }
