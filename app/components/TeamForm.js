@@ -1,17 +1,26 @@
 "use client";
-import { useState } from "react";
+import { addTeam } from "../actions/teams";
+import { useState, useTransition } from "react";
+import toast from "react-hot-toast";
+import { t } from "../lib/i18n";
 import { useLocale } from "../context/LocaleContext";
-import { t } from "..//lib/i18n";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-export default function TeamForm({ onAdd }) {
+export default function TeamForm() {
   const [name, setName] = useState("");
+  const [isPending, startTransition] = useTransition();
   const { locale } = useLocale();
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name) return;
 
-    await onAdd({ name });
-    setName("");
+    startTransition(async () => {
+      try {
+        await addTeam(name);
+        setName("");
+        toast.success(t("Team successfully added", locale));
+      } catch (error) {
+        console.error("Error adding team:", error);
+        toast.error(t("Error adding team", locale));
+      }
+    });
   };
 
   return (
@@ -21,16 +30,19 @@ export default function TeamForm({ onAdd }) {
     >
       <input
         type="text"
+        name="name"
         placeholder={t("Team name", locale)}
+        className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+        required
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
       <button
         type="submit"
-        className="py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        disabled={isPending}
+        className="py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 transition"
       >
-        {t("Add team", locale)}
+        {isPending ? t("Adding...", locale) : t("Add team", locale)}
       </button>
     </form>
   );
