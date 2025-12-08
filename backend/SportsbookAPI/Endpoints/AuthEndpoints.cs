@@ -2,8 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using DotNetEnv;
-using Microsoft.AspNetCore.Authorization;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 namespace SportsbookAPI.Endpoints
@@ -17,10 +16,10 @@ namespace SportsbookAPI.Endpoints
             var authGroup = app.MapGroup("/api/auth");
             authGroup.MapPost("/login", LoginUser);
             authGroup.MapPost("/register", RegisterUser);
-
+            authGroup.MapPost("/logout",Logout);
             var protectedGroup = app.MapGroup("/api/auth").RequireAuthorization();
             protectedGroup.MapGet("/me", Me);
-            protectedGroup.MapPost("/logout", Logout);
+            //protectedGroup.MapPost("/logout", Logout);
             protectedGroup.MapGet("/all", GetAllUsers);
         }
         private static async Task<IResult> GetAllUsers(SportsbookContext db)
@@ -72,7 +71,6 @@ namespace SportsbookAPI.Endpoints
             return Results.Ok(new { message = "User registered successfully" });
         }
         private static async Task<IResult> LoginUser(SportsbookContext db, LoginDto dto, HttpResponse response, ILogger<Program> logger)
-
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
@@ -82,9 +80,6 @@ namespace SportsbookAPI.Endpoints
                 return Results.Json(new { message = "Invalid email or password" }, statusCode: 401);
 
             }
-
-
-
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -107,7 +102,7 @@ namespace SportsbookAPI.Endpoints
                 HttpOnly = true,
                 Secure = false,
                 Expires = DateTime.UtcNow.AddHours(12),
-                SameSite = SameSiteMode.Strict,
+                SameSite =  SameSiteMode.Lax,
                 Path = "/"
             });
             logger.LogInformation("User logged in successfully: {UserId}, Email: {Email}", user.Id, user.Email);
@@ -116,7 +111,8 @@ namespace SportsbookAPI.Endpoints
             {
                 userId = user.Id,
                 name = user.Name,
-                email = user.Email
+                email = user.Email,
+                token = jwtToken
             });
         }
 

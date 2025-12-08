@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace SportsbookAPI.Migrations
 {
     [DbContext(typeof(SportsbookContext))]
-    partial class SportsbookContextModelSnapshot : ModelSnapshot
+    [Migration("20251104084037_AddRowVersionToCompetition")]
+    partial class AddRowVersionToCompetition
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,35 +32,18 @@ namespace SportsbookAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
                     b.HasKey("ID");
 
                     b.ToTable("Competitions");
-                });
-
-            modelBuilder.Entity("CompetitionTeam", b =>
-                {
-                    b.Property<int>("CompetitionsID")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TeamsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CompetitionsID", "TeamsId");
-
-                    b.HasIndex("TeamsId");
-
-                    b.ToTable("CompetitionTeam");
                 });
 
             modelBuilder.Entity("Igrac", b =>
@@ -154,21 +140,6 @@ namespace SportsbookAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("CompetitionTeam", b =>
-                {
-                    b.HasOne("Competition", null)
-                        .WithMany()
-                        .HasForeignKey("CompetitionsID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Team", null)
-                        .WithMany()
-                        .HasForeignKey("TeamsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Igrac", b =>

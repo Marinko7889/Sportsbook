@@ -1,9 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace SportsbookAPI.Endpoints
 {
     public static class CompetitionsEndpoints
     {
+        private static HashSet<string> CompetitionsCacheKeys = new HashSet<string>();
+
+        private static void SetCache(IMemoryCache cache, string key, object data)
+        {
+            cache.Set(key, data, TimeSpan.FromSeconds(60));
+            CompetitionsCacheKeys.Add(key);
+        }
+
+        private static void InvalidateCompetitionsCache(IMemoryCache cache)
+        {
+            foreach (var key in CompetitionsCacheKeys)
+                cache.Remove(key);
+            CompetitionsCacheKeys.Clear();
+        }
+
         public static void RegisterCompetitionsEndpoints(this WebApplication app)
         {
             var competitionsGroup = app.MapGroup("/api/competitions").RequireAuthorization();
@@ -15,8 +31,18 @@ namespace SportsbookAPI.Endpoints
             competitionsGroup.MapDelete("/{id}", DeleteCompetition);
         }
 
-        private static async Task<IResult> GetAllCompetitions(SportsbookContext db, ILogger<Program> logger)
+        
+
+        private static async Task<IResult> GetAllCompetitions(SportsbookContext db, ILogger<Program> logger, IMemoryCache cache)
         {
+            string cacheKey = "competitions_all";
+
+            if (cache.TryGetValue(cacheKey, out object cachedData))
+            {
+                logger.LogInformation("Competitions served from cache (key: {Key})", cacheKey);
+                return Results.Ok(cachedData);
+            }
+
             var competitions = await db.Competitions
                 .Include(c => c.Matches)
                     .ThenInclude(m => m.HomeTeam)
@@ -24,16 +50,21 @@ namespace SportsbookAPI.Endpoints
                     .ThenInclude(m => m.AwayTeam)
                 .ToListAsync();
 
-            logger.LogInformation("Returned {Count} competitions", competitions.Count);
-            return Results.Ok(competitions.Select(c => new
+            var result = competitions.Select(c => new
             {
                 c.ID,
                 c.Name,
+                c.ImageUrl,
                 RowVersion = Convert.ToBase64String(c.RowVersion),
                 Matches = c.Matches.Select(m => new { m.Id, HomeTeam = m.HomeTeam.Name, AwayTeam = m.AwayTeam.Name })
-            }));
-        }
+            
+            });
 
+            SetCache(cache, cacheKey, result);
+            logger.LogInformation("Competitions cached (key: {Key})", cacheKey);
+
+            return Results.Ok(result);
+        }
         private static async Task<IResult> GetCompetitionById(int id, SportsbookContext db, ILogger<Program> logger)
         {
             var competition = await db.Competitions
@@ -59,13 +90,25 @@ namespace SportsbookAPI.Endpoints
             });
         }
 
-        private static async Task<IResult> CreateCompetition(Competition competition, SportsbookContext db, ILogger<Program> logger)
+        private static async Task<IResult> CreateCompetition(Competition competition,IMemoryCache cache, SportsbookContext db, ILogger<Program> logger)
         {
             if (string.IsNullOrWhiteSpace(competition.Name) || competition.Name.Length < 3)
             {
                 logger.LogWarning("Failed to create competition. Name too short");
-                return Results.BadRequest("Name too short");
+                return Results.BadRequest(new {message="Name too short"});
             }
+            var compName = competition.Name.Trim();
+            var normalizedName = compName.ToLower();
+
+            var existingComp = await db.Competitions
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == normalizedName);
+
+            if (existingComp != null)
+            {
+                return Results.Conflict(new { 
+                    message = $"Competition '{compName}' already exists."
+                });
+            }          
 
             if (competition.RowVersion == null || competition.RowVersion.Length == 0)
             {
@@ -75,6 +118,7 @@ namespace SportsbookAPI.Endpoints
 
             db.Competitions.Add(competition);
             await db.SaveChangesAsync();
+            InvalidateCompetitionsCache(cache);
 
             logger.LogInformation("Created competition {CompetitionName}", competition.Name);
             return Results.Ok(new
@@ -86,7 +130,13 @@ namespace SportsbookAPI.Endpoints
             });
         }
 
-        private static async Task<IResult> UpdateCompetition(int id, CompetitionUpdateDto dto, SportsbookContext db, ILogger<Program> logger)
+       
+        private static async Task<IResult> UpdateCompetition(
+            int id,
+            IMemoryCache cache,
+            CompetitionUpdateDto dto,
+            SportsbookContext db,
+            ILogger<Program> logger)
         {
             var existing = await db.Competitions.FirstOrDefaultAsync(c => c.ID == id);
             if (existing == null) return Results.NotFound();
@@ -105,6 +155,12 @@ namespace SportsbookAPI.Endpoints
             }
 
             existing.Name = dto.Name;
+
+            if (dto.ImageUrl != null)
+            {
+                existing.ImageUrl = dto.ImageUrl;
+            }
+
             existing.RowVersion = new byte[8];
             Random.Shared.NextBytes(existing.RowVersion);
 
@@ -119,15 +175,19 @@ namespace SportsbookAPI.Endpoints
                 return Results.Conflict("Competition was updated by another user");
             }
 
+            InvalidateCompetitionsCache(cache);
+
             return Results.Ok(new
             {
                 existing.ID,
                 existing.Name,
+                existing.ImageUrl, 
                 RowVersion = Convert.ToBase64String(existing.RowVersion)
             });
         }
 
-        private static async Task<IResult> DeleteCompetition(int id, SportsbookContext db, ILogger<Program> logger)
+       
+        private static async Task<IResult> DeleteCompetition(int id,IMemoryCache cache, SportsbookContext db, ILogger<Program> logger)
         {
             var existing = await db.Competitions.FindAsync(id);
             if (existing == null)
@@ -138,6 +198,7 @@ namespace SportsbookAPI.Endpoints
 
             db.Competitions.Remove(existing);
             await db.SaveChangesAsync();
+            InvalidateCompetitionsCache(cache);
 
             logger.LogInformation("Deleted competition {CompetitionName}", existing.Name);
             return Results.Ok();

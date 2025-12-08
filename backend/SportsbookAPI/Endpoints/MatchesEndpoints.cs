@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace SportsbookAPI.Endpoints
 {
@@ -13,25 +14,83 @@ namespace SportsbookAPI.Endpoints
             matchesGroup.MapGet("/", GetAllMatches);
             matchesGroup.MapPost("/", CreateMatch);
             matchesGroup.MapDelete("/{id}", DeleteMatch);
+            matchesGroup.MapGet("/all",GetAllMatchesRaw);
         }
-        private static async Task<IResult> GetAllMatches(SportsbookContext db, ILogger<Program> logger)
+        
+
+        private static async Task<IResult> GetAllMatches(
+            SportsbookContext db,
+            ILogger<Program> logger,
+            int page = 1,
+            int? competitionId = null)
+        {
+            var query = db.Matches
+                .Include(m => m.HomeTeam)
+                .Include(m => m.AwayTeam)
+                .Include(m => m.Competition)
+                .AsQueryable();
+
+            if (competitionId.HasValue)
+                query = query.Where(m => m.Competition.ID == competitionId.Value);
+
+            var matches = await query
+                .OrderBy(m => m.Date)
+                .ToListAsync();
+
+            if (!matches.Any())
+                return Results.Ok(new { matches = new List<object>(), totalDays = 0 });
+
+            var dailyGroups = matches
+                .GroupBy(m => m.Date.Date)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            int totalDays = dailyGroups.Count;
+            int index = page - 1;
+
+            if (index < 0 || index >= totalDays)
+                return Results.Ok(new { matches = new List<object>(), totalDays });
+
+            var selectedDay = dailyGroups[index];
+            DateTime dayDate = selectedDay.Key;
+
+            var response = new
+            {
+                page,
+                totalDays,
+                day = dayDate,
+                matches = selectedDay.Select(m => new
+                {
+                    matchId = m.Id,
+                    homeTeam = m.HomeTeam.Name,
+                    awayTeam = m.AwayTeam.Name,
+                    competition = m.Competition.Name,
+                    date = m.Date
+                }).ToList()
+            };
+
+            logger.LogInformation("Fetched matches for day {day}", dayDate.ToShortDateString());
+
+            return Results.Ok(response);
+        }
+        private static async Task<IResult> GetAllMatchesRaw(SportsbookContext db)
         {
             var matches = await db.Matches
                 .Include(m => m.HomeTeam)
                 .Include(m => m.AwayTeam)
                 .Include(m => m.Competition)
-            .Select(m => new
-            {
-                MatchId = m.Id,
-                HomeTeam = m.HomeTeam.Name,
-                AwayTeam = m.AwayTeam.Name,
-                Competition = m.Competition.Name,
-                Date = m.Date
-            })
-            .ToListAsync();
-            logger.LogInformation("Succesfuly fetched {matches} matches", matches.Count);
-            return Results.Ok(matches);
+                .OrderBy(m => m.Date)
+                .ToListAsync();
+
+            return Results.Ok(matches.Select(m => new {
+                matchId = m.Id,
+                homeTeam = m.HomeTeam.Name,
+                awayTeam = m.AwayTeam.Name,
+                competition = m.Competition.Name,
+                date = m.Date
+            }));
         }
+
 
         private static async Task<IResult> CreateMatch(Match match, SportsbookContext db, ILogger<Program> logger)
         {
@@ -79,9 +138,13 @@ namespace SportsbookAPI.Endpoints
         private static async Task<IResult>DeleteMatch(int id,SportsbookContext db, ILogger<Program> logger)
         {
             
-            var match = await db.Matches.FindAsync(id);
+            //var match = await db.Matches.FindAsync(id);
+            var match = await db.Matches
+                .Include(m => m.HomeTeam)
+                .Include(m => m.AwayTeam)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (match == null) return Results.NotFound();
-
+            
             db.Matches.Remove(match);
             await db.SaveChangesAsync();
             logger.LogInformation(

@@ -66,10 +66,16 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+builder.Services.AddMemoryCache();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-
+builder.Services.AddEndpointsApiExplorer(); 
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.SerializerOptions.MaxDepth = 64;
+});
 var app = builder.Build();
 
 app.UseCors();
