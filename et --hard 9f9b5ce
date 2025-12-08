@@ -1,0 +1,22 @@
+[33m9f9b5ce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mtest[m[33m, [m[1;31morigin/test[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33mc383c17[m HEAD@{1}: reset: moving to origin/test
+[33mc383c17[m HEAD@{2}: commit: Updated competitions page
+[33m9f9b5ce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mtest[m[33m, [m[1;31morigin/test[m[33m)[m HEAD@{3}: commit: removed React Query provider from layout
+[33mba54bc4[m HEAD@{4}: commit: Updated teams page
+[33m9185788[m HEAD@{5}: commit: Updated auth pages
+[33m075347c[m HEAD@{6}: commit: Server actions added
+[33m4b4108d[m HEAD@{7}: commit: Auth added
+[33m7254e1f[m HEAD@{8}: commit: controllers moved to endpoints
+[33m2e23538[m HEAD@{9}: commit: Added concurrency for Competition
+[33m5ffa77e[m HEAD@{10}: commit: Minimal api i zasticene rute
+[33me77953a[m HEAD@{11}: commit: Update tablica
+[33m0764ee1[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{12}: checkout: moving from main to test
+[33m0764ee1[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{13}: commit: Dodane nove funkcionalnosti u Vjezba22
+[33m8ed6da8[m HEAD@{14}: commit: Dodan spanjolski jezik
+[33m7d92c61[m HEAD@{15}: commit: Final
+[33m4ebf1aa[m HEAD@{16}: commit: final
+[33ma84af97[m HEAD@{17}: commit: final
+[33m2b8ddc3[m HEAD@{18}: commit: A
+[33m057216f[m HEAD@{19}: Branch: renamed refs/heads/master to refs/heads/main
+[33m057216f[m HEAD@{21}: commit: first commit
+[33m4ce25ee[m HEAD@{22}: commit (initial): Initial commit from Create Next App
