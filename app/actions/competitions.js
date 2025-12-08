@@ -16,7 +16,7 @@ export async function fetchCompetitions() {
   if (!res.ok) throw new Error("Failed to fetch competitions");
   return res.json();
 }
-
+//
 export async function addCompetition(name) {
   if (!name || !name.trim()) throw new Error("Name required");
   const headers = await getHeaders();
@@ -26,12 +26,25 @@ export async function addCompetition(name) {
     headers,
     body: JSON.stringify({ name }),
   });
+  let errorData;
+  try {
+    errorData = await res.json();
+  } catch {
+    errorData = null;
+  }
 
-  if (!res.ok) throw new Error("Failed to add competition");
+  if (!res.ok) {
+    console.error("Backend error:", errorData);
+
+    const errorMessage =
+      errorData?.message || `Failed to add team (${res.status})`;
+    throw new Error(errorMessage);
+  }
 
   revalidateTag("competitions");
 }
-export async function updateCompetition({ id, name, rowVersion }) {
+
+export async function updateCompetition({ id, name, rowVersion, imageUrl }) {
   if (!id || !name || !rowVersion) {
     return { ok: false, status: 400, message: "Missing fields" };
   }
@@ -41,7 +54,7 @@ export async function updateCompetition({ id, name, rowVersion }) {
   const res = await fetch(`${BASE_URL}/competitions/${id}`, {
     method: "PUT",
     headers,
-    body: JSON.stringify({ name, rowVersion }),
+    body: JSON.stringify({ name, rowVersion, imageUrl }),
   });
 
   const data = await res.json().catch(() => null);
@@ -53,7 +66,6 @@ export async function updateCompetition({ id, name, rowVersion }) {
   revalidateTag("competitions");
   return { ok: true, data };
 }
-
 export async function deleteCompetition(id) {
   if (!id) throw new Error("ID required");
 

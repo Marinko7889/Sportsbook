@@ -1,19 +1,20 @@
 import { fetchCompetitions } from "../actions/competitions";
 import CompetitionItem from "./CompetitionItem";
 import AddCompetitionForm from "./AddCompetition";
+import CompetitionSearch from "./CompetitionSearch";
+
 export default async function CompetitionList() {
   const competitions = await fetchCompetitions();
-  const BASE_URL = process.env.BASE_URL;
 
   return (
-    <div className="text-gray-900">
-      <h2 className="text-2xl font-semibold mb-4">Competitions</h2>
-      <AddCompetitionForm />
-      <ul className="space-y-2">
-        {competitions.map((c) => (
-          <CompetitionItem key={c.id} competition={c} BASE_URL={BASE_URL} />
-        ))}
-      </ul>
+    <div className="text-gray-900 flex flex-col items-center px-2 md:items-start">
+      <div className="w-full max-w-sm md:max-w-lg lg:max-w-2xl">
+        <AddCompetitionForm />
+      </div>
+
+      <div className="w-full max-w-sm md:max-w-lg lg:max-w-2xl mt-4">
+        <CompetitionSearch competitions={competitions} />
+      </div>
     </div>
   );
 }

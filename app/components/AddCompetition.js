@@ -16,25 +16,34 @@ export default function AddCompetitionForm() {
       toast.success(t("Competition added", locale));
       setName("");
     } catch (err) {
-      toast.error(t("Failed to add competition", locale));
+      // toast.error(t("Failed to add competition", locale));
+      toast.error(err.message || t("Error adding competition", locale));
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
-      <input
-        type="text"
-        placeholder={t("Competition name", locale)}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="border p-2 rounded flex-1"
-      />
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+    <div>
+      <h2 className="text-2xl font-semibold mb-4 text-center md:text-left">
+        {t("Competitions", locale)}
+      </h2>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col items-center gap-2 mb-4 md:flex-row md:gap-4 w-full"
       >
-        {t("Add", locale)}
-      </button>
-    </form>
+        <input
+          type="text"
+          placeholder={t("Competition name", locale)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="border w-full  p-2 rounded md:flex-1 "
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full max-w-xs md:w-auto"
+        >
+          {t("Add", locale)}
+        </button>
+      </form>
+    </div>
   );
 }

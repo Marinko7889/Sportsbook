@@ -1,6 +1,5 @@
 "use server";
 import { revalidateTag } from "next/cache";
-import { cookies } from "next/headers";
 import { getHeaders } from "./headers";
 const BASE_URL = process.env.BASE_URL;
 
@@ -68,33 +67,43 @@ export async function deleteMatch(matchId) {
   }
 }
 
-export async function fetchMatches(competitionName) {
-  try {
-    const headers = await getHeaders();
+export async function fetchMatches(page = 1, competitionId = null) {
+  const headers = await getHeaders();
+  let url = `${process.env.BASE_URL}/matches?page=${page}`;
+  if (competitionId) url += `&competitionId=${competitionId}`;
 
-    const res = await fetch(`${BASE_URL}/matches`, {
+  try {
+    const res = await fetch(url, {
       headers,
-      next: {
-        revalidate: 3600,
-        tags: ["matches"],
-      },
+      method: "GET",
       cache: "force-cache",
+      next: { revalidate: 60 * 5, tags: ["matches"] },
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to fetch matches: ${res.status}`);
+      console.error("Failed to fetch matches:", res.status);
+      return { matches: [], page: 1, totalDays: 0, day: null };
     }
 
     const data = await res.json();
-
-    const filtered = data.filter(
-      (m) => m.competition?.toLowerCase() === competitionName?.toLowerCase()
-    );
-
-    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
-    return filtered;
-  } catch (error) {
-    console.error("Fetch matches error:", error);
-    return [];
+    return {
+      matches: data.matches || [],
+      page: data.page || 1,
+      totalDays: data.totalDays || 1,
+      day: data.day || null,
+    };
+  } catch (err) {
+    console.error("Error fetching matches:", err);
+    return { matches: [], page: 1, totalDays: 0, day: null };
   }
+}
+export async function fetchAllMatches() {
+  const headers = await getHeaders();
+  const url = `${process.env.BASE_URL}/matches/all`;
+
+  const res = await fetch(url, { headers });
+
+  if (!res.ok) return [];
+
+  return await res.json();
 }

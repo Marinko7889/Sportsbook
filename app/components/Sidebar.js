@@ -1,57 +1,59 @@
 "use client";
-
-import { useRouter } from "next/navigation";
-import { logout } from "../lib/auth";
-import { t } from "../lib/i18n";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { useLocale } from "../context/LocaleContext";
-export default function Sidebar({ active, setActive }) {
+import { t } from "../lib/i18n";
+import { logoutUser } from "../actions/auth";
+
+export default function Sidebar({ onNavigate }) {
   const { locale } = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
 
-  // const handleClick = (tab, path) => {
-  //   setActive(tab);
-  //   router.push(path, undefined, { shallow: true });
-  // };
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleNav = () => {
+    if (onNavigate) onNavigate();
   };
-  const handleClick = (tab) => {
-    setActive(tab);
-    router.push(`/${tab}`);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    router.push("/login");
   };
 
   return (
-    <div className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col fixed">
-      <button
-        className={`mb-2 p-2 text-left ${
-          active === "competitions" ? "bg-gray-700" : ""
+    <div className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col overflow-hidden">
+      <Link
+        href="/competition"
+        className={`mb-2 p-2 w-full${
+          pathname === "/competition" ? "bg-gray-700" : ""
         }`}
-        onClick={() => handleClick("competition", "/competition")}
+        onClick={handleNav}
       >
         {t("Competitions", locale)}
-      </button>
-      <button
-        className={`mb-2 p-2 text-left ${
-          active === "teams" ? "bg-gray-700" : ""
+      </Link>
+
+      <Link
+        href="/teams"
+        className={`mb-2 p-2 w-full ${
+          pathname === "/teams" ? "bg-gray-700" : ""
         }`}
-        onClick={() => handleClick("teams", "/teams")}
+        onClick={handleNav}
       >
         {t("Teams", locale)}
-      </button>
-      <button
-        className={`mb-2 p-2 text-left ${
-          active === "vjezba" ? "bg-gray-700" : ""
+      </Link>
+
+      <Link
+        href="/matches"
+        className={`mb-2 p-2 w-full ${
+          pathname === "/matches" ? "bg-gray-700" : ""
         }`}
-        onClick={() => handleClick("vjezba", "/vjezba")}
+        onClick={handleNav}
       >
-        vjezba
-      </button>
+        {t("Matches", locale)}
+      </Link>
 
       <div className="mt-auto">
         <button
-          className="p-2 w-full bg-red-600 hover:bg-red-700 rounded"
+          className="py-2 w-full bg-red-600 hover:bg-red-700 rounded"
           onClick={handleLogout}
         >
           {t("Logout", locale)}

@@ -1,40 +1,28 @@
-"use client";
-import Spinner from "@/app/components/Spinner";
-import UnesiIgraca from "@/app/components/UnesiIgraca";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { fetchTeamById } from "../../actions/teams";
+import { fetchAllMatches, fetchMatches } from "../../actions/matches";
+import { fetchCompetitions } from "../../actions/competitions";
+import MatchesList from "../../components/MatchesList";
+import TeamCompetitions from "../../components/TeamCompetitions";
+export default async function TeamPage({ params }) {
+  const teamId = parseInt(params.id, 10);
 
-export default function TeamPage() {
-  const { id } = useParams();
-  const teamId = parseInt(id, 10);
+  const [team, allMatches, competitions] = await Promise.all([
+    fetchTeamById(teamId),
+    //fetchMatches(),
+    fetchAllMatches(),
+    fetchCompetitions(),
+  ]);
 
-  const fetchTimovi = async () => {
-    const res = await fetch("http://localhost:5072/api/teams");
-    if (!res.ok) throw new Error("Greška pri dohvaćanju timova");
-    return res.json();
-  };
-
-  const { data: teams = [], isLoading: isLoadingTeams } = useQuery({
-    queryKey: ["teams"],
-    queryFn: fetchTimovi,
-    staleTime: 1000 * 5 * 6,
-  });
-
-  if (isLoadingTeams) return <Spinner />;
-
-  const tim = teams.find((t) => t.id === teamId);
-  if (!tim)
-    return (
-      <h1 className="text-3xl font-bold text-center mt-10">Nepoznat tim</h1>
-    );
-
+  if (!team) return <div>Team not found</div>;
+  //console.log(team);
   return (
-    <div className="p-6 flex flex-col items-center">
-      <h1 className="text-4xl font-bold uppercase mb-8 text-center">
-        {tim.name}
+    <div className="max-w-3xl mx-auto p-4">
+      <h1 className="text-3xl text-blue-500 hover:text-blue-700 mb-6">
+        {team.name}
       </h1>
+      <TeamCompetitions team={team} competitions={competitions} />
 
-      <UnesiIgraca timovi={[tim]} samoZaTimId={teamId} />
+      <MatchesList team={team} matches={allMatches} />
     </div>
   );
 }

@@ -1,10 +1,11 @@
+import { fetchCompetitions } from "../actions/competitions";
 import CompetitionList from "../components/CompetitionList";
-import Sidebar from "../components/Sidebar";
 
-export default function CompetitionsPage() {
+export default async function CompetitionsPage() {
+  const competitions = await fetchCompetitions();
   return (
-    <div className="p-8">
-      <CompetitionList />
+    <div className="min-h-screen flex flex-col">
+      <CompetitionList initialCompetitions={competitions} />
     </div>
   );
 }

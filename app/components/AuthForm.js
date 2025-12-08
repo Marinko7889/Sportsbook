@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginUser, registerUser } from "../actions/auth";
 import { t } from "../lib/i18n";
 import { useLocale } from "../context/LocaleContext";
 
-export default function AuthForm({ mode = "login", BASE_URL }) {
+export default function AuthForm({ mode = "login" }) {
   const router = useRouter();
   const { locale, setLocale } = useLocale();
 
@@ -19,37 +20,25 @@ export default function AuthForm({ mode = "login", BASE_URL }) {
     setError("");
     setSuccess("");
 
-    const endpoint =
-      mode === "login" ? `${BASE_URL}/auth/login` : `${BASE_URL}/auth/register`;
-    
-
-    const payload =
-      mode === "login" ? { email, password } : { name, email, password };
-
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        credentials: mode === "login" ? "include" : undefined,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data?.message || "Something went wrong");
-        return;
-      }
+      const formData = new FormData();
 
       if (mode === "register") {
+        formData.append("name", name);
+      }
+      formData.append("email", email);
+      formData.append("password", password);
+
+      if (mode === "login") {
+        await loginUser(formData);
+        router.push("/competition");
+      } else {
+        await registerUser(formData);
         setSuccess("Registered successfully! Redirecting to login...");
         setTimeout(() => router.push("/login"), 500);
-      } else {
-        router.push("/competition");
       }
     } catch (err) {
-      console.error(err);
-      setError("Something went wrong");
+      setError(err.message);
     }
   };
 
@@ -73,7 +62,7 @@ export default function AuthForm({ mode = "login", BASE_URL }) {
         {mode === "register" && (
           <input
             type="text"
-            placeholder="Name"
+            placeholder={t("Name", locale)}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="border p-2 rounded w-full mb-3"
@@ -83,7 +72,7 @@ export default function AuthForm({ mode = "login", BASE_URL }) {
 
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t("Email", locale)}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="border p-2 rounded w-full mb-3"
@@ -91,7 +80,7 @@ export default function AuthForm({ mode = "login", BASE_URL }) {
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder={t("Password", locale)}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="border p-2 rounded w-full mb-3"
